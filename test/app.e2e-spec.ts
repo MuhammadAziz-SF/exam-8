@@ -16,8 +16,13 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  // The default route is not defined, this test would fail.
-  // A health check endpoint is a good alternative.
+  it('/ (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Hello World!');
+  });
+
   it('/health (GET)', () => {
     return request(app.getHttpServer()).get('/health').expect(200);
   });
