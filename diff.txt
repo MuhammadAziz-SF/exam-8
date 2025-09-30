@@ -1,118 +1,561 @@
 ```diff
-diff --git a/src/api/airports/airports.controller.ts b/src/api/airports/airports.controller.ts
-index 544075f..461875c 100644
---- a/src/api/airports/airports.controller.ts
-+++ b/src/api/airports/airports.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { AirportsService } from './airports.service';
- import { CreateAirportDto } from './dto/create-airport.dto';
- import { UpdateAirportDto } from './dto/update-airport.dto';
- 
-+@ApiTags('Airports')
- @Controller('airports')
- export class AirportsController {
-   constructor(private readonly airportsService: AirportsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new airport' })
-+  @ApiResponse({ status: 201, description: 'The airport has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createAirportDto: CreateAirportDto) {
-     return this.airportsService.create(createAirportDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all airports' })
-+  @ApiResponse({ status: 200, description: 'Return all airports.' })
-   findAll() {
-     return this.airportsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get an airport by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the airport.' })
-+  @ApiResponse({ status: 404, description: 'Airport not found.' })
-   findOne(@Param('id') id: string) {
-     return this.airportsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update an airport' })
-+  @ApiResponse({ status: 200, description: 'The airport has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Airport not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateAirportDto: UpdateAirportDto) {
-     return this.airportsService.update(+id, updateAirportDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete an airport' })
-+  @ApiResponse({ status: 200, description: 'The airport has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Airport not found.' })
-   remove(@Param('id') id: string) {
-     return this.airportsService.remove(+id);
-   }
-diff --git a/src/api/airports/dto/create-airport.dto.ts b/src/api/airports/dto/create-airport.dto.ts
-index 2733918..9899388 100644
---- a/src/api/airports/dto/create-airport.dto.ts
-+++ b/src/api/airports/dto/create-airport.dto.ts
-@@ -1,2 +1,25 @@
--export class CreateAirportDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
- 
-+export class CreateAirportDto {
-+  @ApiProperty({
-+    example: 'John F. Kennedy International Airport',
-+    description: 'The name of the airport',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  name: string;
+diff --git a/.dockerignore b/.dockerignore
+new file mode 100644
+index 0000000..631452c
+--- /dev/null
++++ b/.dockerignore
+@@ -0,0 +1,17 @@
++.git
++.gitignore
++.dockerignore
++node_modules
++npm-debug.log
++README.md
++Dockerfile
++docker-compose.yml
++docker-compose.ci.yml
++.env
++.env.*
++dist
++test
++coverage
++.vscode
++.idea
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+new file mode 100644
+index 0000000..732808c
+--- /dev/null
++++ b/.github/workflows/main.yml
+@@ -0,0 +1,102 @@
++name: CI/CD Pipeline
 +
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the city where the airport is located',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  cityId: string;
++on:
++  push:
++    branches: [ "main" ]
++  pull_request:
++    branches: [ "main" ]
 +
-+  @ApiProperty({ example: 123, description: 'The code of the airport' })
-+  @IsNumber()
-+  @IsNotEmpty()
-+  code: number;
-+}
-diff --git a/src/api/airports/dto/update-airport.dto.ts b/src/api/airports/dto/update-airport.dto.ts
-index 6116853..931653e 100644
---- a/src/api/airports/dto/update-airport.dto.ts
-+++ b/src/api/airports/dto/update-airport.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateAirportDto } from './create-airport.dto';
++jobs:
++  lint-and-unit-test:
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Set up Node.js
++        uses: actions/setup-node@v4
++        with:
++          node-version: '20'
++          cache: 'npm'
++
++      - name: Install dependencies
++        run: npm ci
++
++      - name: Run linter
++        run: npm run lint
++
++      - name: Run unit tests
++        run: npm test
++
++  e2e-test:
++    runs-on: ubuntu-latest
++    needs: lint-and-unit-test
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Create .env.test file
++        run: |
++          echo "PORT=3000" > .env.test
++          echo "PG_HOST=db" >> .env.test
++          echo "PG_PORT=5432" >> .env.test
++          echo "PG_USER=testuser" >> .env.test
++          echo "PG_PASS=testpass" >> .env.test
++          echo "PG_DB=testdb" >> .env.test
++          echo "PG_DB_TEST=testdb" >> .env.test
++          echo "ACCESS_TOKEN_KEY=some-secret-key-for-testing" >> .env.test
++          echo "ACCESS_TOKEN_TIME=15m" >> .env.test
++          echo "REFRESH_TOKEN_KEY=another-secret-key-for-testing" >> .env.test
++          echo "REFRESH_TOKEN_TIME=7d" >> .env.test
++          echo "DB_URL=dummy" >> .env.test
++          echo "SMTP_HOST=dummy" >> .env.test
++          echo "SMTP_PORT=dummy" >> .env.test
++          echo "SMTP_USER=dummy" >> .env.test
++          echo "SMTP_PASS=dummy" >> .env.test
++          echo "ADMIN_NAME=dummy" >> .env.test
++          echo "ADMIN_EMAIL=dummy" >> .env.test
++          echo "ADMIN_PASSWORD=dummy" >> .env.test
++
++      - name: Start services with Docker Compose
++        run: docker-compose -f docker-compose.ci.yml up -d --build
++
++      - name: Wait for services to be healthy
++        run: |
++          echo "Waiting for API to be ready..."
++          sleep 15
++
++      - name: Run E2E tests
++        run: docker-compose -f docker-compose.ci.yml exec -T api npm run test:e2e
++
++      - name: Stop services
++        if: always()
++        run: docker-compose -f docker-compose.ci.yml down
++
++  build-and-push-image:
++    runs-on: ubuntu-latest
++    needs: e2e-test
++    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++
++      - name: Log in to Docker Hub
++        uses: docker/login-action@v3
++        with:
++          username: ${{ secrets.DOCKERHUB_USERNAME }}
++          password: ${{ secrets.DOCKERHUB_TOKEN }}
++
++      - name: Build and push Docker image
++        uses: docker/build-push-action@v5
++        with:
++          context: .
++          push: true
++          tags: yourdockerhubusername/flight-booking-api:latest, yourdockerhubusername/flight-booking-api:${{ github.sha }}
++
++  deploy:
++    runs-on: ubuntu-latest
++    needs: build-and-push-image
++    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
++    steps:
++      - name: Placeholder for Deploy
++        run: |
++          echo "Deployment job placeholder"
++          echo "This is where you would add steps to deploy your application."
+diff --git a/Dockerfile b/Dockerfile
+new file mode 100644
+index 0000000..4255018
+--- /dev/null
++++ b/Dockerfile
+@@ -0,0 +1,35 @@
++# Stage 1: Build the application
++FROM node:20-alpine AS builder
++
++WORKDIR /usr/src/app
++
++# Copy package.json and package-lock.json
++COPY package*.json ./
++
++# Install dependencies
++RUN npm ci
++
++# Copy application source
++COPY . .
++
++# Build the application
++RUN npm run build
++
++# Prune development dependencies
++RUN npm prune --production
++
++# Stage 2: Create the production image
++FROM node:20-alpine
++
++WORKDIR /usr/src/app
++
++# Create a non-root user
++RUN addgroup -S appgroup && adduser -S appuser -G appgroup
++
++# Copy dependencies and built application from builder stage
++COPY --from=builder /usr/src/app/node_modules ./node_modules
++COPY --from=builder /usr/src/app/dist ./dist
++COPY --from=builder /usr/src/app/package.json ./
++
++USER appuser
++
++EXPOSE 3000
++
++CMD ["node", "dist/main"]
+diff --git a/docker-compose.ci.yml b/docker-compose.ci.yml
+new file mode 100644
+index 0000000..99f365d
+--- /dev/null
++++ b/docker-compose.ci.yml
+@@ -0,0 +1,24 @@
++version: '3.8'
++
++services:
++  api:
++    build:
++      context: .
++      dockerfile: Dockerfile
++    container_name: test-api
++    ports:
++      - "3001:3000" # Use a different host port to avoid conflicts
++    env_file:
++      - .env.test
++    depends_on:
++      - db
++    command: ["node", "dist/main"]
++
++  db:
++    image: postgres:15-alpine
++    container_name: test-db
++    ports:
++      - "5433:5432" # Use a different host port
++    environment:
++      POSTGRES_USER: ${PG_USER}
++      POSTGRES_PASSWORD: ${PG_PASS}
++      POSTGRES_DB: ${PG_DB_TEST}
+diff --git a/docker-compose.yml b/docker-compose.yml
+new file mode 100644
+index 0000000..096472d
+--- /dev/null
++++ b/docker-compose.yml
+@@ -0,0 +1,31 @@
++version: '3.8'
++
++services:
++  api:
++    build:
++      context: .
++      dockerfile: Dockerfile
++    container_name: flight-booking-api
++    ports:
++      - "${PORT}:${PORT}"
++    env_file:
++      - .env
++    depends_on:
++      - db
++    volumes:
++      - ./src:/usr/src/app/src
++      - ./test:/usr/src/app/test
++    command: npm run start:dev
++
++  db:
++    image: postgres:15-alpine
++    container_name: flight-booking-db
++    ports:
++      - "${PG_PORT}:${PG_PORT}"
++    environment:
++      POSTGRES_USER: ${PG_USER}
++      POSTGRES_PASSWORD: ${PG_PASS}
++      POSTGRES_DB: ${PG_DB}
++    volumes:
++      - postgres_data:/var/lib/postgresql/data
++
++volumes:
++  postgres_data:
+diff --git a/jest.config.js b/jest.config.js
+new file mode 100644
+index 0000000..0280287
+--- /dev/null
++++ b/jest.config.js
+@@ -0,0 +1,14 @@
++module.exports = {
++  moduleFileExtensions: ['js', 'json', 'ts'],
++  rootDir: 'src',
++  testRegex: '.*\\.spec\\.ts$',
++  transform: {
++    '^.+\\.(t|j)s$': 'ts-jest',
++  },
++  collectCoverageFrom: ['**/*.(t|j)s'],
++  coverageDirectory: '../coverage',
++  testEnvironment: 'node',
++  moduleNameMapper: {
++    '^src/(.*)$': '<rootDir>/$1',
++  },
++};
+diff --git a/package.json b/package.json
+index 548c48a..0050519 100644
+--- a/package.json
++++ b/package.json
+@@ -12,12 +12,12 @@
+     "start:debug": "nest start --debug --watch",
+     "start:prod": "node dist/main",
+     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+-    "test": "jest",
+-    "test:watch": "jest --watch",
+-    "test:cov": "jest --coverage",
+-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
++    "test": "jest --config jest.config.js",
++    "test:watch": "jest --watch --config jest.config.js",
++    "test:cov": "jest --coverage --config jest.config.js",
++    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand --config jest.config.js",
+     "test:e2e": "jest --config ./test/jest-e2e.json"
+   },
+   "dependencies": {
+@@ -67,22 +67,5 @@
+     "ts-node": "^10.9.2",
+     "tsconfig-paths": "^4.2.0",
+     "typescript": "^5.7.3",
+     "typescript-eslint": "^8.20.0"
+-  },
+-  "jest": {
+-    "moduleFileExtensions": [
+-      "js",
+-      "json",
+-      "ts"
+-    ],
+-    "rootDir": "src",
+-    "testRegex": ".*\\.spec\\.ts$",
+-    "transform": {
+-      "^.+\\.(t|j)s$": "ts-jest"
+-    },
+-    "collectCoverageFrom": [
+-      "**/*.(t|j)s"
+-    ],
+-    "coverageDirectory": "../coverage",
+-    "testEnvironment": "node"
+   }
+ }
+diff --git a/src/api/users/users.service.spec.ts b/src/api/users/users.service.spec.ts
+new file mode 100644
+index 0000000..3817441
+--- /dev/null
++++ b/src/api/users/users.service.spec.ts
+@@ -0,0 +1,164 @@
++import { Test, TestingModule } from '@nestjs/testing';
++import { getRepositoryToken } from '@nestjs/typeorm';
++import { Repository } from 'typeorm';
++import { NotFoundException } from '@nestjs/common';
++import { UsersService } from './users.service';
++import { UserEntity } from 'src/core/entities/users.entity';
++import { CreateUserDto } from './dto/create-user.dto';
++import { BcryptEncryption } from 'src/infrastructure/bcrypt';
++import { UpdateUserDto } from './dto/update-user.dto';
++
++// Mock BcryptEncryption
++jest.mock('src/infrastructure/bcrypt');
++
++type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
++const createMockRepository = <T = any>(): MockRepository<T> => ({
++  create: jest.fn(),
++  save: jest.fn(),
++  find: jest.fn(),
++  findOneBy: jest.fn(),
++  delete: jest.fn(),
++});
++
++describe('UsersService', () => {
++  let service: UsersService;
++  let userRepository: MockRepository<UserEntity>;
++
++  beforeEach(async () => {
++    const module: TestingModule = await Test.createTestingModule({
++      providers: [
++        UsersService,
++        {
++          provide: getRepositoryToken(UserEntity),
++          useValue: createMockRepository(),
++        },
++      ],
++    }).compile();
++
++    service = module.get<UsersService>(UsersService);
++    userRepository = module.get(getRepositoryToken(UserEntity));
++  });
++
++  it('should be defined', () => {
++    expect(service).toBeDefined();
++  });
++
++  describe('create', () => {
++    it('should create and save a new user with a hashed password', async () => {
++      const createUserDto: CreateUserDto = {
++        email: 'test@example.com',
++        password: 'password123',
++        firstName: 'Test',
++        lastName: 'User',
++        phoneNumber: '1234567890',
++        passportNumber: 'A123',
++        nationality: 'Testland',
++        dateOfBirth: '2000-01-01',
++      };
++      const hashedPassword = 'hashedPassword';
++      const userEntity = { ...createUserDto, id: 'some-uuid', role: 'passenger' };
++      const savedUser = { ...userEntity, password: hashedPassword };
++      const { password, ...result } = savedUser;
++
++      (BcryptEncryption.encrypt as jest.Mock).mockResolvedValue(hashedPassword);
++      userRepository.create.mockReturnValue(userEntity);
++      userRepository.save.mockResolvedValue(savedUser);
++
++      const createdUser = await service.create(createUserDto);
++
++      expect(BcryptEncryption.encrypt).toHaveBeenCalledWith('password123');
++      expect(userRepository.create).toHaveBeenCalledWith({
++        ...createUserDto,
++        password: hashedPassword,
++      });
++      expect(userRepository.save).toHaveBeenCalledWith(userEntity);
++      expect(createdUser).toEqual(result);
++    });
++  });
++
++  describe('findAll', () => {
++    it('should return an array of users without passwords', async () => {
++      const users = [
++        { id: '1', email: 'test1@example.com', password: 'p1' },
++        { id: '2', email: 'test2@example.com', password: 'p2' },
++      ];
++      userRepository.find.mockResolvedValue(users);
++
++      const result = await service.findAll();
++
++      expect(result).toEqual([
++        { id: '1', email: 'test1@example.com' },
++        { id: '2', email: 'test2@example.com' },
++      ]);
++    });
++  });
++
++  describe('findOne', () => {
++    it('should find and return a user by ID without password', async () => {
++      const user = { id: '1', email: 'test@example.com', password: 'p1' };
++      userRepository.findOneBy.mockResolvedValue(user);
++
++      const result = await service.findOne('1');
++      const { password, ...expected } = user;
++
++      expect(userRepository.findOneBy).toHaveBeenCalledWith({ id: '1' });
++      expect(result).toEqual(expected);
++    });
++
++    it('should throw NotFoundException if user is not found', async () => {
++      userRepository.findOneBy.mockResolvedValue(null);
++      await expect(service.findOne('1')).rejects.toThrow(NotFoundException);
++    });
++  });
++
++  describe('update', () => {
++    it('should update a user and return it without password', async () => {
++      const updateUserDto: UpdateUserDto = { firstName: 'Updated' };
++      const existingUser = { id: '1', firstName: 'Test', password: 'p1' };
++      const updatedUser = { ...existingUser, ...updateUserDto };
++
++      userRepository.findOneBy.mockResolvedValue(existingUser);
++      userRepository.save.mockResolvedValue(updatedUser);
++
++      const result = await service.update('1', updateUserDto);
++      const { password, ...expected } = updatedUser;
++
++      expect(userRepository.findOneBy).toHaveBeenCalledWith({ id: '1' });
++      expect(userRepository.save).toHaveBeenCalledWith(expect.objectContaining({ firstName: 'Updated' }));
++      expect(result).toEqual(expected);
++    });
++
++    it('should hash password if it is provided in update DTO', async () => {
++        const updateUserDto: UpdateUserDto = { password: 'newPassword' };
++        const existingUser = { id: '1', password: 'p1' };
++        const hashedPassword = 'hashedNewPassword';
++
++        (BcryptEncryption.encrypt as jest.Mock).mockResolvedValue(hashedPassword);
++        userRepository.findOneBy.mockResolvedValue(existingUser);
++        userRepository.save.mockResolvedValue({ ...existingUser, password: hashedPassword });
++
++        await service.update('1', updateUserDto);
++
++        expect(BcryptEncryption.encrypt).toHaveBeenCalledWith('newPassword');
++        expect(userRepository.save).toHaveBeenCalledWith(expect.objectContaining({ password: hashedPassword }));
++    });
++
++    it('should throw NotFoundException if user to update is not found', async () => {
++      userRepository.findOneBy.mockResolvedValue(null);
++      await expect(service.update('1', {})).rejects.toThrow(NotFoundException);
++    });
++  });
++
++  describe('remove', () => {
++    it('should remove a user and return a success message', async () => {
++      const user = { id: '1' };
++      userRepository.findOneBy.mockResolvedValue(user);
++      userRepository.delete.mockResolvedValue({ affected: 1 });
++
++      const result = await service.remove('1');
++
++      expect(userRepository.findOneBy).toHaveBeenCalledWith({ id: '1' });
++      expect(userRepository.delete).toHaveBeenCalledWith('1');
++      expect(result).toEqual({ message: `User with ID "1" has been successfully deleted.` });
++    });
++
++    it('should throw NotFoundException if user to remove is not found', async () => {
++      userRepository.findOneBy.mockResolvedValue(null);
++      await expect(service.remove('1')).rejects.toThrow(NotFoundException);
++    });
++  });
++});
+diff --git a/test/app.e2e-spec.ts b/test/app.e2e-spec.ts
+index 8933b2e..2899450 100644
+--- a/test/app.e2e-spec.ts
++++ b/test/app.e2e-spec.ts
+@@ -2,7 +2,7 @@
+ import { INestApplication } from '@nestjs/common';
+ import * as request from 'supertest';
+ import { App } from 'supertest/types';
+-import { AppModule } from './../src/app.module';
++import { AppModule } from 'src/api/app.module';
  
- export class UpdateAirportDto extends PartialType(CreateAirportDto) {}
-diff --git a/src/api/app.service.ts b/src/api/app.service.ts
-index 455480d..9180746 100644
---- a/src/api/app.service.ts
-+++ b/src/api/app.service.ts
-@@ -2,6 +2,7 @@
- /* eslint-disable @typescript-eslint/no-unsafe-return */
- /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-+import { ValidationPipe } from '@nestjs/common';
- import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
- import { NestFactory } from '@nestjs/core';
- import { AppModule } from './app.module.js';
-@@ -15,6 +16,14 @@
-       origin: '*',
-     });
+ describe('AppController (e2e)', () => {
+   let app: INestApplication<App>;
+@@ -16,10 +16,11 @@
+     await app.init();
+   });
  
+-  it('/ (GET)', () => {
++  // The default route is not defined, this test would fail.
++  // A health check endpoint is a good alternative.
++  it('/health (GET)', () => {
+     return request(app.getHttpServer())
+-      .get('/')
+-      .expect(200)
+-      .expect('Hello World!');
++      .get('/health')
++      .expect(200);
+   });
+ });
+diff --git a/test/jest-e2e.json b/test/jest-e2e.json
+index 3f41113..678881d 100644
+--- a/test/jest-e2e.json
++++ b/test/jest-e2e.json
+@@ -1,9 +1,13 @@
+ {
+   "moduleFileExtensions": ["js", "json", "ts"],
+-  "rootDir": ".",
++  "rootDir": "..",
+   "testEnvironment": "node",
+   "testRegex": ".e2e-spec.ts$",
+   "transform": {
+     "^.+\\.(t|j)s$": "ts-jest"
++  },
++  "moduleNameMapper": {
++    "^src/(.*)$": "<rootDir>/src/$1"
+   }
+ }
+diff --git a/test/users.e2e-spec.ts b/test/users.e2e-spec.ts
+new file mode 100644
+index 0000000..91a5611
+--- /dev/null
++++ b/test/users.e2e-spec.ts
+@@ -0,0 +1,77 @@
++import { Test, TestingModule } from '@nestjs/testing';
++import { INestApplication, ValidationPipe } from '@nestjs/common';
++import * as request from 'supertest';
++import { AppModule } from 'src/api/app.module';
++import { getRepositoryToken } from '@nestjs/typeorm';
++import { UserEntity } from 'src/core/entities/users.entity';
++import { Repository } from 'typeorm';
++
++describe('UsersController (e2e)', () => {
++  let app: INestApplication;
++  let userRepository: Repository<UserEntity>;
++  let createdUserId: string;
++
++  beforeAll(async () => {
++    const moduleFixture: TestingModule = await Test.createTestingModule({
++      imports: [AppModule],
++    }).compile();
++
++    app = moduleFixture.createNestApplication();
 +    app.useGlobalPipes(
 +      new ValidationPipe({
 +        whitelist: true,
@@ -120,1357 +563,58 @@ index 455480d..9180746 100644
 +        transform: true,
 +      }),
 +    );
++    await app.init();
 +
-     const api = 'api/v1';
-     app.setGlobalPrefix(api);
-     const config_swagger = new DocumentBuilder()
-diff --git a/src/api/cities/cities.controller.ts b/src/api/cities/cities.controller.ts
-index 8e4806a..6573c52 100644
---- a/src/api/cities/cities.controller.ts
-+++ b/src/api/cities/cities.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { CitiesService } from './cities.service';
- import { CreateCityDto } from './dto/create-city.dto';
- import { UpdateCityDto } from './dto/update-city.dto';
- 
-+@ApiTags('Cities')
- @Controller('cities')
- export class CitiesController {
-   constructor(private readonly citiesService: CitiesService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new city' })
-+  @ApiResponse({ status: 201, description: 'The city has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createCityDto: CreateCityDto) {
-     return this.citiesService.create(createCityDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all cities' })
-+  @ApiResponse({ status: 200, description: 'Return all cities.' })
-   findAll() {
-     return this.citiesService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a city by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the city.' })
-+  @ApiResponse({ status: 404, description: 'City not found.' })
-   findOne(@Param('id') id: string) {
-     return this.citiesService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a city' })
-+  @ApiResponse({ status: 200, description: 'The city has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'City not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateCityDto: UpdateCityDto) {
-     return this.citiesService.update(+id, updateCityDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a city' })
-+  @ApiResponse({ status: 200, description: 'The city has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'City not found.' })
-   remove(@Param('id') id: string) {
-     return this.citiesService.remove(+id);
-   }
-diff --git a/src/api/cities/dto/create-city.dto.ts b/src/api/cities/dto/create-city.dto.ts
-index 0123c7b..993172e 100644
---- a/src/api/cities/dto/create-city.dto.ts
-+++ b/src/api/cities/dto/create-city.dto.ts
-@@ -1,2 +1,19 @@
--export class CreateCityDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
- 
-+export class CreateCityDto {
-+  @ApiProperty({
-+    example: 'New York',
-+    description: 'The name of the city',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  name: string;
++    userRepository = moduleFixture.get<Repository<UserEntity>>(
++      getRepositoryToken(UserEntity),
++    );
++  });
 +
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the country where the city is located',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  countryId: string;
-+}
-diff --git a/src/api/cities/dto/update-city.dto.ts b/src/api/cities/dto/update-city.dto.ts
-index 650058e..8031572 100644
---- a/src/api/cities/dto/update-city.dto.ts
-+++ b/src/api/cities/dto/update-city.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateCityDto } from './create-city.dto';
- 
- export class UpdateCityDto extends PartialType(CreateCityDto) {}
-diff --git a/src/api/classes/classes.controller.ts b/src/api/classes/classes.controller.ts
-index 6831032..544d673 100644
---- a/src/api/classes/classes.controller.ts
-+++ b/src/api/classes/classes.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { ClassesService } from './classes.service';
- import { CreateClassDto } from './dto/create-class.dto';
- import { UpdateClassDto } from './dto/update-class.dto';
- 
-+@ApiTags('Classes')
- @Controller('classes')
- export class ClassesController {
-   constructor(private readonly classesService: ClassesService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new travel class' })
-+  @ApiResponse({ status: 201, description: 'The class has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createClassDto: CreateClassDto) {
-     return this.classesService.create(createClassDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all travel classes' })
-+  @ApiResponse({ status: 200, description: 'Return all classes.' })
-   findAll() {
-     return this.classesService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a travel class by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the class.' })
-+  @ApiResponse({ status: 404, description: 'Class not found.' })
-   findOne(@Param('id') id: string) {
-     return this.classesService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a travel class' })
-+  @ApiResponse({ status: 200, description: 'The class has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Class not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateClassDto: UpdateClassDto) {
-     return this.classesService.update(+id, updateClassDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a travel class' })
-+  @ApiResponse({ status: 200, description: 'The class has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Class not found.' })
-   remove(@Param('id') id: string) {
-     return this.classesService.remove(+id);
-   }
-diff --git a/src/api/classes/dto/create-class.dto.ts b/src/api/classes/dto/create-class.dto.ts
-index 73867c4..1797371 100644
---- a/src/api/classes/dto/create-class.dto.ts
-+++ b/src/api/classes/dto/create-class.dto.ts
-@@ -1,2 +1,18 @@
--export class CreateClassDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsString } from 'class-validator';
- 
-+export class CreateClassDto {
-+  @ApiProperty({
-+    example: 'Business',
-+    description: 'The name of the travel class',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  name: string;
++  beforeEach(async () => {
++    // Clean up before each test
++    await userRepository.delete({});
++  });
 +
-+  @ApiProperty({
-+    example: 'Comfortable seating with extra legroom and premium services.',
-+    description: 'A brief description of the travel class',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  description: string;
-+}
-diff --git a/src/api/classes/dto/update-class.dto.ts b/src/api/classes/dto/update-class.dto.ts
-index 7622616..844598d 100644
---- a/src/api/classes/dto/update-class.dto.ts
-+++ b/src/api/classes/dto/update-class.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateClassDto } from './create-class.dto';
- 
- export class UpdateClassDto extends PartialType(CreateClassDto) {}
-diff --git a/src/api/companies/companies.controller.ts b/src/api/companies/companies.controller.ts
-index 923507c..44e8320 100644
---- a/src/api/companies/companies.controller.ts
-+++ b/src/api/companies/companies.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { CompaniesService } from './companies.service';
- import { CreateCompanyDto } from './dto/create-company.dto';
- import { UpdateCompanyDto } from './dto/update-company.dto';
- 
-+@ApiTags('Companies')
- @Controller('companies')
- export class CompaniesController {
-   constructor(private readonly companiesService: CompaniesService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new company' })
-+  @ApiResponse({ status: 201, description: 'The company has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createCompanyDto: CreateCompanyDto) {
-     return this.companiesService.create(createCompanyDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all companies' })
-+  @ApiResponse({ status: 200, description: 'Return all companies.' })
-   findAll() {
-     return this.companiesService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a company by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the company.' })
-+  @ApiResponse({ status: 404, description: 'Company not found.' })
-   findOne(@Param('id') id: string) {
-     return this.companiesService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a company' })
-+  @ApiResponse({ status: 200, description: 'The company has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Company not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-     return this.companiesService.update(+id, updateCompanyDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a company' })
-+  @ApiResponse({ status: 200, description: 'The company has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Company not found.' })
-   remove(@Param('id') id: string) {
-     return this.companiesService.remove(+id);
-   }
-diff --git a/src/api/companies/dto/create-company.dto.ts b/src/api/companies/dto/create-company.dto.ts
-index 7f5898e..9129759 100644
---- a/src/api/companies/dto/create-company.dto.ts
-+++ b/src/api/companies/dto/create-company.dto.ts
-@@ -1,2 +1,18 @@
--export class CreateCompanyDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsString } from 'class-validator';
- 
-+export class CreateCompanyDto {
-+  @ApiProperty({
-+    example: 'Delta Air Lines',
-+    description: 'The name of the airline company',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  name: string;
++  afterAll(async () => {
++    await app.close();
++  });
 +
-+  @ApiProperty({
-+    example: 'United States',
-+    description: 'The country of origin for the company',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  country: string;
-+}
-diff --git a/src/api/companies/dto/update-company.dto.ts b/src/api/companies/dto/update-company.dto.ts
-index 4554203..389283f 100644
---- a/src/api/companies/dto/update-company.dto.ts
-+++ b/src/api/companies/dto/update-company.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateCompanyDto } from './create-company.dto';
- 
- export class UpdateCompanyDto extends PartialType(CreateCompanyDto) {}
-diff --git a/src/api/countries/countries.controller.ts b/src/api/countries/countries.controller.ts
-index 8e49605..707521e 100644
---- a/src/api/countries/countries.controller.ts
-+++ b/src/api/countries/countries.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { CountriesService } from './countries.service';
- import { CreateCountryDto } from './dto/create-country.dto';
- import { UpdateCountryDto } from './dto/update-country.dto';
- 
-+@ApiTags('Countries')
- @Controller('countries')
- export class CountriesController {
-   constructor(private readonly countriesService: CountriesService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new country' })
-+  @ApiResponse({ status: 201, description: 'The country has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createCountryDto: CreateCountryDto) {
-     return this.countriesService.create(createCountryDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all countries' })
-+  @ApiResponse({ status: 200, description: 'Return all countries.' })
-   findAll() {
-     return this.countriesService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a country by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the country.' })
-+  @ApiResponse({ status: 404, description: 'Country not found.' })
-   findOne(@Param('id') id: string) {
-     return this.countriesService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a country' })
-+  @ApiResponse({ status: 200, description: 'The country has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Country not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateCountryDto: UpdateCountryDto) {
-     return this.countriesService.update(+id, updateCountryDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a country' })
-+  @ApiResponse({ status: 200, description: 'The country has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Country not found.' })
-   remove(@Param('id') id: string) {
-     return this.countriesService.remove(+id);
-   }
-diff --git a/src/api/countries/dto/create-country.dto.ts b/src/api/countries/dto/create-country.dto.ts
-index 7354562..2398d5c 100644
---- a/src/api/countries/dto/create-country.dto.ts
-+++ b/src/api/countries/dto/create-country.dto.ts
-@@ -1,2 +1,15 @@
--export class CreateCountryDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
- 
-+export class CreateCountryDto {
-+  @ApiProperty({
-+    example: 'United States',
-+    description: 'The name of the country',
-+    maxLength: 100,
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  @MaxLength(100)
-+  name: string;
-+}
-diff --git a/src/api/countries/dto/update-country.dto.ts b/src/api/countries/dto/update-country.dto.ts
-index 3574164..2b9f36e 100644
---- a/src/api/countries/dto/update-country.dto.ts
-+++ b/src/api/countries/dto/update-country.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateCountryDto } from './create-country.dto';
- 
- export class UpdateCountryDto extends PartialType(CreateCountryDto) {}
-diff --git a/src/api/flights/dto/create-flight.dto.ts b/src/api/flights/dto/create-flight.dto.ts
-index 492416b..96b1297 100644
---- a/src/api/flights/dto/create-flight.dto.ts
-+++ b/src/api/flights/dto/create-flight.dto.ts
-@@ -1,2 +1,61 @@
--export class CreateFlightDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import {
-+  IsDateString,
-+  IsEnum,
-+  IsNotEmpty,
-+  IsNumber,
-+  IsUUID,
-+} from 'class-validator';
-+import { flight_status } from 'src/common/enums';
- 
-+export class CreateFlightDto {
-+  @ApiProperty({
-+    example: 1234,
-+    description: 'The flight number',
-+  })
-+  @IsNumber()
-+  @IsNotEmpty()
-+  flightNumber: number;
++  describe('/users (POST)', () => {
++    const createUserDto = {
++      email: 'e2e.test@example.com',
++      password: 'password123',
++      firstName: 'E2E',
++      lastName: 'Test',
++      phoneNumber: '1234567890',
++      passportNumber: 'E2E123',
++      nationality: 'Testland',
++      dateOfBirth: '2000-01-01',
++    };
 +
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the plane for this flight',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  planeId: string;
++    it('should create a new user and return it without the password', async () => {
++      const res = await request(app.getHttpServer())
++        .post('/users')
++        .send(createUserDto)
++        .expect(201);
 +
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the departure airport',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  departureAirport: string;
++      expect(res.body).toBeDefined();
++      expect(res.body.email).toEqual(createUserDto.email);
++      expect(res.body.password).toBeUndefined();
++      expect(res.body.id).toBeDefined();
++      createdUserId = res.body.id;
 +
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the arrival airport',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  arrivalAirport: string;
++      // Verify user exists in the database
++      const userInDb = await userRepository.findOneBy({ id: createdUserId });
++      expect(userInDb).toBeDefined();
++      expect(userInDb.email).toEqual(createUserDto.email);
++    });
 +
-+  @ApiProperty({
-+    example: '2024-08-15T10:00:00Z',
-+    description: 'The departure time in ISO 8601 format',
-+  })
-+  @IsDateString()
-+  @IsNotEmpty()
-+  departureTime: Date;
-+
-+  @ApiProperty({
-+    example: '2024-08-15T14:00:00Z',
-+    description: 'The arrival time in ISO 8601 format',
-+  })
-+  @IsDateString()
-+  @IsNotEmpty()
-+  arrivalTime: Date;
-+
-+  @ApiProperty({ example: flight_status.SCHEDULED, enum: flight_status })
-+  @IsEnum(flight_status)
-+  @IsNotEmpty()
-+  status: flight_status;
-+}
-diff --git a/src/api/flights/dto/update-flight.dto.ts b/src/api/flights/dto/update-flight.dto.ts
-index 9951119..4033100 100644
---- a/src/api/flights/dto/update-flight.dto.ts
-+++ b/src/api/flights/dto/update-flight.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateFlightDto } from './create-flight.dto';
- 
- export class UpdateFlightDto extends PartialType(CreateFlightDto) {}
-diff --git a/src/api/flights/flights.controller.ts b/src/api/flights/flights.controller.ts
-index 2850937..277051b 100644
---- a/src/api/flights/flights.controller.ts
-+++ b/src/api/flights/flights.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { FlightsService } from './flights.service';
- import { CreateFlightDto } from './dto/create-flight.dto';
- import { UpdateFlightDto } from './dto/update-flight.dto';
- 
-+@ApiTags('Flights')
- @Controller('flights')
- export class FlightsController {
-   constructor(private readonly flightsService: FlightsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new flight' })
-+  @ApiResponse({ status: 201, description: 'The flight has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createFlightDto: CreateFlightDto) {
-     return this.flightsService.create(createFlightDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all flights' })
-+  @ApiResponse({ status: 200, description: 'Return all flights.' })
-   findAll() {
-     return this.flightsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a flight by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the flight.' })
-+  @ApiResponse({ status: 404, description: 'Flight not found.' })
-   findOne(@Param('id') id: string) {
-     return this.flightsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a flight' })
-+  @ApiResponse({ status: 200, description: 'The flight has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Flight not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateFlightDto: UpdateFlightDto) {
-     return this.flightsService.update(+id, updateFlightDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a flight' })
-+  @ApiResponse({ status: 200, description: 'The flight has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Flight not found.' })
-   remove(@Param('id') id: string) {
-     return this.flightsService.remove(+id);
-   }
-diff --git a/src/api/loyalty-program/dto/create-loyalty-program.dto.ts b/src/api/loyalty-program/dto/create-loyalty-program.dto.ts
-index 0353987..4531238 100644
---- a/src/api/loyalty-program/dto/create-loyalty-program.dto.ts
-+++ b/src/api/loyalty-program/dto/create-loyalty-program.dto.ts
-@@ -1,2 +1,28 @@
--export class CreateLoyaltyProgramDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import {
-+  IsEnum,
-+  IsNotEmpty,
-+  IsNumber,
-+  IsOptional,
-+  IsUUID,
-+} from 'class-validator';
-+import { loyalty_levels } from 'src/common/enums';
- 
-+export class CreateLoyaltyProgramDto {
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the user',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  userId: string;
-+
-+  @ApiProperty({ example: 100, description: 'Initial points', required: false })
-+  @IsNumber()
-+  @IsOptional()
-+  points?: number;
-+
-+  @ApiProperty({ example: loyalty_levels.BRONZE, enum: loyalty_levels, required: false })
-+  @IsEnum(loyalty_levels)
-+  @IsOptional()
-+  level?: loyalty_levels;
-+}
-diff --git a/src/api/loyalty-program/loyalty-program.controller.ts b/src/api/loyalty-program/loyalty-program.controller.ts
-index 7203a0c..417f549 100644
---- a/src/api/loyalty-program/loyalty-program.controller.ts
-+++ b/src/api/loyalty-program/loyalty-program.controller.ts
-@@ -8,38 +8,53 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { LoyaltyProgramService } from './loyalty-program.service.js';
- import { CreateLoyaltyProgramDto } from './dto/create-loyalty-program.dto.js';
- import { UpdateLoyaltyProgramDto } from './dto/update-loyalty-program.dto.js';
- 
-+@ApiTags('Loyalty Program')
- @Controller('loyalty-program')
- export class LoyaltyProgramController {
-   constructor(private readonly loyaltyProgramService: LoyaltyProgramService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new loyalty program entry' })
-+  @ApiResponse({ status: 201, description: 'The entry has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createLoyaltyProgramDto: CreateLoyaltyProgramDto) {
-     return this.loyaltyProgramService.create(createLoyaltyProgramDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all loyalty program entries' })
-+  @ApiResponse({ status: 200, description: 'Return all entries.' })
-   findAll() {
-     return this.loyaltyProgramService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a loyalty program entry by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the entry.' })
-+  @ApiResponse({ status: 404, description: 'Entry not found.' })
-   findOne(@Param('id') id: string) {
-     return this.loyaltyProgramService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a loyalty program entry' })
-+  @ApiResponse({ status: 200, description: 'The entry has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Entry not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(
-     @Param('id') id: string,
-     @Body() updateLoyaltyProgramDto: UpdateLoyaltyProgramDto,
-   ) {
-     return this.loyaltyProgramService.update(+id, updateLoyaltyProgramDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a loyalty program entry' })
-+  @ApiResponse({ status: 200, description: 'The entry has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Entry not found.' })
-   remove(@Param('id') id: string) {
-     return this.loyaltyProgramService.remove(+id);
-   }
-diff --git a/src/api/news/dto/create-news.dto.ts b/src/api/news/dto/create-news.dto.ts
-index 7241288..322199f 100644
---- a/src/api/news/dto/create-news.dto.ts
-+++ b/src/api/news/dto/create-news.dto.ts
-@@ -1,2 +1,18 @@
--export class CreateNewsDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsString } from 'class-validator';
- 
-+export class CreateNewsDto {
-+  @ApiProperty({
-+    example: 'New Summer Destinations',
-+    description: 'The title of the news article',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  title: string;
-+
-+  @ApiProperty({
-+    example: 'We are excited to announce new flights to...',
-+    description: 'The main content of the news article',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  content: string;
-+}
-diff --git a/src/api/news/dto/update-news.dto.ts b/src/api/news/dto/update-news.dto.ts
-index 03683a4..7043328 100644
---- a/src/api/news/dto/update-news.dto.ts
-+++ b/src/api/news/dto/update-news.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateNewsDto } from './create-news.dto';
- 
- export class UpdateNewsDto extends PartialType(CreateNewsDto) {}
-diff --git a/src/api/news/news.controller.ts b/src/api/news/news.controller.ts
-index 6308077..09265f9 100644
---- a/src/api/news/news.controller.ts
-+++ b/src/api/news/news.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { NewsService } from './news.service';
- import { CreateNewsDto } from './dto/create-news.dto';
- import { UpdateNewsDto } from './dto/update-news.dto';
- 
-+@ApiTags('News')
- @Controller('news')
- export class NewsController {
-   constructor(private readonly newsService: NewsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new news article' })
-+  @ApiResponse({ status: 201, description: 'The news article has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createNewsDto: CreateNewsDto) {
-     return this.newsService.create(createNewsDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all news articles' })
-+  @ApiResponse({ status: 200, description: 'Return all news articles.' })
-   findAll() {
-     return this.newsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a news article by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the news article.' })
-+  @ApiResponse({ status: 404, description: 'News article not found.' })
-   findOne(@Param('id') id: string) {
-     return this.newsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a news article' })
-+  @ApiResponse({ status: 200, description: 'The news article has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'News article not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateNewsDto: UpdateNewsDto) {
-     return this.newsService.update(+id, updateNewsDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a news article' })
-+  @ApiResponse({ status: 200, description: 'The news article has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'News article not found.' })
-   remove(@Param('id') id: string) {
-     return this.newsService.remove(+id);
-   }
-diff --git a/src/api/payments/dto/create-payment.dto.ts b/src/api/payments/dto/create-payment.dto.ts
-index 731557c..304218a 100644
---- a/src/api/payments/dto/create-payment.dto.ts
-+++ b/src/api/payments/dto/create-payment.dto.ts
-@@ -1,2 +1,33 @@
--export class CreatePaymentDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
- 
-+export class CreatePaymentDto {
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the ticket being paid for',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  ticketId: string;
-+
-+  @ApiProperty({
-+    example: 199.99,
-+    description: 'The payment amount',
-+  })
-+  @IsNumber()
-+  @IsNotEmpty()
-+  amount: number;
-+
-+  @ApiProperty({
-+    example: 'USD',
-+    description: 'The currency of the payment',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  currency: string;
-+
-+  @ApiProperty({
-+    example: 'Credit Card',
-+    description: 'The method used for payment',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  paymentMethod: string;
-+}
-diff --git a/src/api/payments/dto/update-payment.dto.ts b/src/api/payments/dto/update-payment.dto.ts
-index 352495b..0112700 100644
---- a/src/api/payments/dto/update-payment.dto.ts
-+++ b/src/api/payments/dto/update-payment.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreatePaymentDto } from './create-payment.dto';
- 
- export class UpdatePaymentDto extends PartialType(CreatePaymentDto) {}
-diff --git a/src/api/payments/payments.controller.ts b/src/api/payments/payments.controller.ts
-index 10a7195..81e4b86 100644
---- a/src/api/payments/payments.controller.ts
-+++ b/src/api/payments/payments.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { PaymentsService } from './payments.service';
- import { CreatePaymentDto } from './dto/create-payment.dto';
- import { UpdatePaymentDto } from './dto/update-payment.dto';
- 
-+@ApiTags('Payments')
- @Controller('payments')
- export class PaymentsController {
-   constructor(private readonly paymentsService: PaymentsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new payment' })
-+  @ApiResponse({ status: 201, description: 'The payment has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createPaymentDto: CreatePaymentDto) {
-     return this.paymentsService.create(createPaymentDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all payments' })
-+  @ApiResponse({ status: 200, description: 'Return all payments.' })
-   findAll() {
-     return this.paymentsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a payment by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the payment.' })
-+  @ApiResponse({ status: 404, description: 'Payment not found.' })
-   findOne(@Param('id') id: string) {
-     return this.paymentsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a payment' })
-+  @ApiResponse({ status: 200, description: 'The payment has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Payment not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
-     return this.paymentsService.update(+id, updatePaymentDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a payment' })
-+  @ApiResponse({ status: 200, description: 'The payment has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Payment not found.' })
-   remove(@Param('id') id: string) {
-     return this.paymentsService.remove(+id);
-   }
-diff --git a/src/api/planes/dto/create-plane.dto.ts b/src/api/planes/dto/create-plane.dto.ts
-index 7385978..6a4582f 100644
---- a/src/api/planes/dto/create-plane.dto.ts
-+++ b/src/api/planes/dto/create-plane.dto.ts
-@@ -1,2 +1,25 @@
--export class CreatePlaneDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
- 
-+export class CreatePlaneDto {
-+  @ApiProperty({
-+    example: 'Boeing 737',
-+    description: 'The model of the plane',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  model: string;
-+
-+  @ApiProperty({
-+    example: 189,
-+    description: 'The passenger capacity of the plane',
-+  })
-+  @IsInt()
-+  @IsNotEmpty()
-+  capacity: number;
-+
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the company that owns the plane',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  companyId: string;
-+}
-diff --git a/src/api/planes/dto/update-plane.dto.ts b/src/api/planes/dto/update-plane.dto.ts
-index 2872e4e..0742d47 100644
---- a/src/api/planes/dto/update-plane.dto.ts
-+++ b/src/api/planes/dto/update-plane.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreatePlaneDto } from './create-plane.dto';
- 
- export class UpdatePlaneDto extends PartialType(CreatePlaneDto) {}
-diff --git a/src/api/planes/planes.controller.ts b/src/api/planes/planes.controller.ts
-index 451433f..b57a553 100644
---- a/src/api/planes/planes.controller.ts
-+++ b/src/api/planes/planes.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { PlanesService } from './planes.service';
- import { CreatePlaneDto } from './dto/create-plane.dto';
- import { UpdatePlaneDto } from './dto/update-plane.dto';
- 
-+@ApiTags('Planes')
- @Controller('planes')
- export class PlanesController {
-   constructor(private readonly planesService: PlanesService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new plane' })
-+  @ApiResponse({ status: 201, description: 'The plane has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createPlaneDto: CreatePlaneDto) {
-     return this.planesService.create(createPlaneDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all planes' })
-+  @ApiResponse({ status: 200, description: 'Return all planes.' })
-   findAll() {
-     return this.planesService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a plane by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the plane.' })
-+  @ApiResponse({ status: 404, description: 'Plane not found.' })
-   findOne(@Param('id') id: string) {
-     return this.planesService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a plane' })
-+  @ApiResponse({ status: 200, description: 'The plane has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Plane not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updatePlaneDto: UpdatePlaneDto) {
-     return this.planesService.update(+id, updatePlaneDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a plane' })
-+  @ApiResponse({ status: 200, description: 'The plane has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Plane not found.' })
-   remove(@Param('id') id: string) {
-     return this.planesService.remove(+id);
-   }
-diff --git a/src/api/reviews/dto/create-review.dto.ts b/src/api/reviews/dto/create-review.dto.ts
-index 92269c6..7359995 100644
---- a/src/api/reviews/dto/create-review.dto.ts
-+++ b/src/api/reviews/dto/create-review.dto.ts
-@@ -1,2 +1,28 @@
--export class CreateReviewDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import {
-+  IsInt,
-+  IsNotEmpty,
-+  IsString,
-+  IsUUID,
-+  Max,
-+  Min,
-+} from 'class-validator';
- 
-+export class CreateReviewDto {
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the flight being reviewed',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  flightId: string;
-+
-+  @ApiProperty({ example: 5, description: 'Rating from 1 to 5' })
-+  @IsInt()
-+  @Min(1)
-+  @Max(5)
-+  @IsNotEmpty()
-+  rating: number;
-+
-+  @ApiProperty({ example: 'Great flight!', description: 'User comment' })
-+  @IsString()
-+  @IsNotEmpty()
-+  comment: string;
-+}
-diff --git a/src/api/reviews/dto/update-review.dto.ts b/src/api/reviews/dto/update-review.dto.ts
-index 548c895..3210408 100644
---- a/src/api/reviews/dto/update-review.dto.ts
-+++ b/src/api/reviews/dto/update-review.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateReviewDto } from './create-review.dto';
- 
- export class UpdateReviewDto extends PartialType(CreateReviewDto) {}
-diff --git a/src/api/reviews/reviews.controller.ts b/src/api/reviews/reviews.controller.ts
-index 81b3780..13161c9 100644
---- a/src/api/reviews/reviews.controller.ts
-+++ b/src/api/reviews/reviews.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { ReviewsService } from './reviews.service';
- import { CreateReviewDto } from './dto/create-review.dto';
- import { UpdateReviewDto } from './dto/update-review.dto';
- 
-+@ApiTags('Reviews')
- @Controller('reviews')
- export class ReviewsController {
-   constructor(private readonly reviewsService: ReviewsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new review' })
-+  @ApiResponse({ status: 201, description: 'The review has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createReviewDto: CreateReviewDto) {
-     return this.reviewsService.create(createReviewDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all reviews' })
-+  @ApiResponse({ status: 200, description: 'Return all reviews.' })
-   findAll() {
-     return this.reviewsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a review by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the review.' })
-+  @ApiResponse({ status: 404, description: 'Review not found.' })
-   findOne(@Param('id') id: string) {
-     return this.reviewsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a review' })
-+  @ApiResponse({ status: 200, description: 'The review has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Review not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
-     return this.reviewsService.update(+id, updateReviewDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a review' })
-+  @ApiResponse({ status: 200, description: 'The review has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Review not found.' })
-   remove(@Param('id') id: string) {
-     return this.reviewsService.remove(+id);
-   }
-diff --git a/src/api/seats/dto/create-seat.dto.ts b/src/api/seats/dto/create-seat.dto.ts
-index 0352516..034a02d 100644
---- a/src/api/seats/dto/create-seat.dto.ts
-+++ b/src/api/seats/dto/create-seat.dto.ts
-@@ -1,2 +1,25 @@
--export class CreateSeatDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
- 
-+export class CreateSeatDto {
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the plane this seat belongs to',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  planeId: string;
-+
-+  @ApiProperty({
-+    example: '14A',
-+    description: 'The seat number',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  seatNumber: string;
-+
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the travel class for this seat',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  classId: string;
-+}
-diff --git a/src/api/seats/dto/update-seat.dto.ts b/src/api/seats/dto/update-seat.dto.ts
-index 032049e..311680d 100644
---- a/src/api/seats/dto/update-seat.dto.ts
-+++ b/src/api/seats/dto/update-seat.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateSeatDto } from './create-seat.dto';
- 
- export class UpdateSeatDto extends PartialType(CreateSeatDto) {}
-diff --git a/src/api/seats/seats.controller.ts b/src/api/seats/seats.controller.ts
-index 5488107..c80460c 100644
---- a/src/api/seats/seats.controller.ts
-+++ b/src/api/seats/seats.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { SeatsService } from './seats.service';
- import { CreateSeatDto } from './dto/create-seat.dto';
- import { UpdateSeatDto } from './dto/update-seat.dto';
- 
-+@ApiTags('Seats')
- @Controller('seats')
- export class SeatsController {
-   constructor(private readonly seatsService: SeatsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new seat' })
-+  @ApiResponse({ status: 201, description: 'The seat has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createSeatDto: CreateSeatDto) {
-     return this.seatsService.create(createSeatDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all seats' })
-+  @ApiResponse({ status: 200, description: 'Return all seats.' })
-   findAll() {
-     return this.seatsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a seat by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the seat.' })
-+  @ApiResponse({ status: 404, description: 'Seat not found.' })
-   findOne(@Param('id') id: string) {
-     return this.seatsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a seat' })
-+  @ApiResponse({ status: 200, description: 'The seat has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Seat not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateSeatDto: UpdateSeatDto) {
-     return this.seatsService.update(+id, updateSeatDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a seat' })
-+  @ApiResponse({ status: 200, description: 'The seat has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Seat not found.' })
-   remove(@Param('id') id: string) {
-     return this.seatsService.remove(+id);
-   }
-diff --git a/src/api/tickets/dto/create-ticket.dto.ts b/src/api/tickets/dto/create-ticket.dto.ts
-index 731557c..5632007 100644
---- a/src/api/tickets/dto/create-ticket.dto.ts
-+++ b/src/api/tickets/dto/create-ticket.dto.ts
-@@ -1,2 +1,33 @@
--export class CreateTicketDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
- 
-+export class CreateTicketDto {
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the flight for this ticket',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  flightId: string;
-+
-+  @ApiProperty({
-+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-+    description: 'The ID of the seat for this ticket',
-+  })
-+  @IsUUID()
-+  @IsNotEmpty()
-+  seatId: string;
-+
-+  @ApiProperty({
-+    example: 250.5,
-+    description: 'The price of the ticket',
-+  })
-+  @IsNumber()
-+  @IsNotEmpty()
-+  price: number;
-+
-+  @ApiProperty({
-+    example: 'USD',
-+    description: 'The currency of the price',
-+  })
-+  @IsString()
-+  @IsNotEmpty()
-+  currency: string;
-+}
-diff --git a/src/api/tickets/dto/update-ticket.dto.ts b/src/api/tickets/dto/update-ticket.dto.ts
-index 352495b..0112700 100644
---- a/src/api/tickets/dto/update-ticket.dto.ts
-+++ b/src/api/tickets/dto/update-ticket.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateTicketDto } from './create-ticket.dto';
- 
- export class UpdateTicketDto extends PartialType(CreateTicketDto) {}
-diff --git a/src/api/tickets/tickets.controller.ts b/src/api/tickets/tickets.controller.ts
-index 10a7195..81e4b86 100644
---- a/src/api/tickets/tickets.controller.ts
-+++ b/src/api/tickets/tickets.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { TicketsService } from './tickets.service';
- import { CreateTicketDto } from './dto/create-ticket.dto';
- import { UpdateTicketDto } from './dto/update-ticket.dto';
- 
-+@ApiTags('Tickets')
- @Controller('tickets')
- export class TicketsController {
-   constructor(private readonly ticketsService: TicketsService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new ticket' })
-+  @ApiResponse({ status: 201, description: 'The ticket has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createTicketDto: CreateTicketDto) {
-     return this.ticketsService.create(createTicketDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all tickets' })
-+  @ApiResponse({ status: 200, description: 'Return all tickets.' })
-   findAll() {
-     return this.ticketsService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a ticket by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the ticket.' })
-+  @ApiResponse({ status: 404, description: 'Ticket not found.' })
-   findOne(@Param('id') id: string) {
-     return this.ticketsService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a ticket' })
-+  @ApiResponse({ status: 200, description: 'The ticket has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'Ticket not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateTicketDto: UpdateTicketDto) {
-     return this.ticketsService.update(+id, updateTicketDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a ticket' })
-+  @ApiResponse({ status: 200, description: 'The ticket has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'Ticket not found.' })
-   remove(@Param('id') id: string) {
-     return this.ticketsService.remove(+id);
-   }
-diff --git a/src/api/users/dto/create-user.dto.ts b/src/api/users/dto/create-user.dto.ts
-index 73867c4..4d4c82c 100644
---- a/src/api/users/dto/create-user.dto.ts
-+++ b/src/api/users/dto/create-user.dto.ts
-@@ -1,2 +1,63 @@
--export class CreateUserDto {}
-+import { ApiProperty } from '@nestjs/swagger';
-+import {
-+  IsDateString,
-+  IsEmail,
-+  IsNotEmpty,
-+  IsString,
-+  MinLength,
-+} from 'class-validator';
- 
-+export class CreateUserDto {
-+  @ApiProperty({ example: 'John', description: 'User first name' })
-+  @IsString()
-+  @IsNotEmpty()
-+  firstName: string;
-+
-+  @ApiProperty({ example: 'Doe', description: 'User last name' })
-+  @IsString()
-+  @IsNotEmpty()
-+  lastName: string;
-+
-+  @ApiProperty({
-+    example: 'john.doe@example.com',
-+    description: 'User email address',
-+  })
-+  @IsEmail()
-+  @IsNotEmpty()
-+  email: string;
-+
-+  @ApiProperty({ example: '+1234567890', description: 'User phone number' })
-+  @IsString()
-+  @IsNotEmpty()
-+  phoneNumber: string;
-+
-+  @ApiProperty({
-+    example: 'strongPassword123',
-+    description: 'User password',
-+    minLength: 8,
-+  })
-+  @IsString()
-+  @MinLength(8)
-+  @IsNotEmpty()
-+  password: string;
-+
-+  @ApiProperty({ example: 'A12345678', description: 'User passport number' })
-+  @IsString()
-+  @IsNotEmpty()
-+  passportNumber: string;
-+
-+  @ApiProperty({ example: 'American', description: 'User nationality' })
-+  @IsString()
-+  @IsNotEmpty()
-+  nationality: string;
-+
-+  @ApiProperty({
-+    example: '1990-01-01',
-+    description: 'User date of birth (YYYY-MM-DD)',
-+  })
-+  @IsDateString()
-+  @IsNotEmpty()
-+  dateOfBirth: string;
-+}
-diff --git a/src/api/users/dto/update-user.dto.ts b/src/api/users/dto/update-user.dto.ts
-index 7622616..844598d 100644
---- a/src/api/users/dto/update-user.dto.ts
-+++ b/src/api/users/dto/update-user.dto.ts
-@@ -1,4 +1,4 @@
--import { PartialType } from '@nestjs/mapped-types';
-+import { PartialType } from '@nestjs/swagger';
- import { CreateUserDto } from './create-user.dto';
- 
- export class UpdateUserDto extends PartialType(CreateUserDto) {}
-diff --git a/src/api/users/users.controller.ts b/src/api/users/users.controller.ts
-index 6831032..544d673 100644
---- a/src/api/users/users.controller.ts
-+++ b/src/api/users/users.controller.ts
-@@ -8,36 +8,51 @@
-   Param,
-   Delete,
- } from '@nestjs/common';
-+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
- import { UsersService } from './users.service';
- import { CreateUserDto } from './dto/create-user.dto';
- import { UpdateUserDto } from './dto/update-user.dto';
- 
-+@ApiTags('Users')
- @Controller('users')
- export class UsersController {
-   constructor(private readonly usersService: UsersService) {}
- 
-   @Post()
-+  @ApiOperation({ summary: 'Create a new user' })
-+  @ApiResponse({ status: 201, description: 'The user has been successfully created.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   create(@Body() createUserDto: CreateUserDto) {
-     return this.usersService.create(createUserDto);
-   }
- 
-   @Get()
-+  @ApiOperation({ summary: 'Get all users' })
-+  @ApiResponse({ status: 200, description: 'Return all users.' })
-   findAll() {
-     return this.usersService.findAll();
-   }
- 
-   @Get(':id')
-+  @ApiOperation({ summary: 'Get a user by ID' })
-+  @ApiResponse({ status: 200, description: 'Return the user.' })
-+  @ApiResponse({ status: 404, description: 'User not found.' })
-   findOne(@Param('id') id: string) {
-     return this.usersService.findOne(+id);
-   }
- 
-   @Patch(':id')
-+  @ApiOperation({ summary: 'Update a user' })
-+  @ApiResponse({ status: 200, description: 'The user has been successfully updated.' })
-+  @ApiResponse({ status: 404, description: 'User not found.' })
-+  @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
-   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-     return this.usersService.update(+id, updateUserDto);
-   }
- 
-   @Delete(':id')
-+  @ApiOperation({ summary: 'Delete a user' })
-+  @ApiResponse({ status: 200, description: 'The user has been successfully deleted.' })
-+  @ApiResponse({ status: 404, description: 'User not found.' })
-   remove(@Param('id') id: string) {
-     return this.usersService.remove(+id);
-   }
++    it('should fail with validation error for bad request', () => {
++      return request(app.getHttpServer())
++        .post('/users')
++        .send({ email: 'not-an-email', password: 'short' })
++        .expect(400);
++    });
++  });
++});
 ```

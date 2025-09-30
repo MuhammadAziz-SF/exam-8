@@ -6,7 +6,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -40,10 +39,10 @@ export class FlightsEntity {
   @Column({ type: 'timestamp' })
   arrivalTime: Timestamp;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid', nullable: true })
   createdBy: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid', nullable: true })
   updatedBy: string;
 
   @Column({ type: 'enum', enum: enums.flight_status })
@@ -67,17 +66,23 @@ export class FlightsEntity {
   @JoinColumn({ name: 'arrivalAirport' })
   arAirport: AirportsEntity;
 
-  @OneToOne(() => UserEntity, (u) => u.byCreated, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'arrivalAirport' })
-  byCreated: AirportsEntity;
+  @ManyToOne(() => UserEntity, (u) => u.createdflights, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'createdBy' })
+  byCreated: UserEntity;
 
-  @OneToOne(() => UserEntity, (u) => u.byUpdated, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'arrivalAirport' })
-  byUpdated: AirportsEntity;
+  @ManyToOne(() => UserEntity, (u) => u.updatedflights, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'updatedBy' })
+  byUpdated: UserEntity;
 
   @OneToMany(() => TicketsEntity, (t) => t.flight, { cascade: true })
-  ticket: TicketsEntity;
+  tickets: TicketsEntity[];
 
-  @OneToOne(() => ReviewsEntity, (r) => r.flight, { cascade: true })
+  @OneToMany(() => ReviewsEntity, (review) => review.flight)
   reviews: ReviewsEntity[];
 }

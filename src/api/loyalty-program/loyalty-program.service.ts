@@ -48,7 +48,9 @@ export class LoyaltyProgramService {
   }
 
   async findOne(id: string) {
-    const loyaltyProgram = await this.loyaltyProgramRepository.findOneBy({ id });
+    const loyaltyProgram = await this.loyaltyProgramRepository.findOneBy({
+      id,
+    });
     if (!loyaltyProgram) {
       throw new NotFoundException(
         `Loyalty program entry with ID "${id}" not found`,

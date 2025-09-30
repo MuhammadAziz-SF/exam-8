@@ -18,7 +18,7 @@ export default class Application {
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
-        forbidNonWhiteListed: true,
+        forbidNonWhitelisted: true,
         transform: true,
       }),
     );

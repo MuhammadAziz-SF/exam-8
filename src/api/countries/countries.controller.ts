@@ -40,7 +40,7 @@ export class CountriesController {
   @ApiResponse({ status: 200, description: 'Return the country.' })
   @ApiResponse({ status: 404, description: 'Country not found.' })
   findOne(@Param('id') id: string) {
-    return this.countriesService.findOne(+id);
+    return this.countriesService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class CountriesController {
   @ApiResponse({ status: 404, description: 'Country not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateCountryDto: UpdateCountryDto) {
-    return this.countriesService.update(+id, updateCountryDto);
+    return this.countriesService.update(id, updateCountryDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class CountriesController {
   })
   @ApiResponse({ status: 404, description: 'Country not found.' })
   remove(@Param('id') id: string) {
-    return this.countriesService.remove(+id);
+    return this.countriesService.remove(id);
   }
 }

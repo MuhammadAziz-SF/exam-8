@@ -10,14 +10,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { LoyaltyProgramEntity } from './loyalty-programm.entity';
-import { NewsEntity } from './news.entity';
 import { FlightsEntity } from './flights.entity';
 import { UserEntity } from './users.entity';
 import { SeatsEntity } from './seats.entity';
 import { PaymentsEntity } from './payments.entity';
 
-@Entity({ name: 'users' })
+@Entity({ name: 'tickets' })
 export class TicketsEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -53,11 +51,14 @@ export class TicketsEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => UserEntity, (u) => u.ticket, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (u) => u.tickets, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @ManyToOne(() => FlightsEntity, (f) => f.ticket, { onDelete: 'CASCADE' })
+  @ManyToOne(() => FlightsEntity, (f) => f.tickets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'flightId' })
   flight: FlightsEntity;
 
@@ -66,5 +67,5 @@ export class TicketsEntity {
   seat: SeatsEntity;
 
   @OneToOne(() => PaymentsEntity, (p) => p.ticket, { cascade: true })
-  payment: TicketsEntity;
+  payment: PaymentsEntity;
 }

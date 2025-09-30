@@ -40,7 +40,7 @@ export class ClassesController {
   @ApiResponse({ status: 200, description: 'Return the class.' })
   @ApiResponse({ status: 404, description: 'Class not found.' })
   findOne(@Param('id') id: string) {
-    return this.classesService.findOne(+id);
+    return this.classesService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class ClassesController {
   @ApiResponse({ status: 404, description: 'Class not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateClassDto: UpdateClassDto) {
-    return this.classesService.update(+id, updateClassDto);
+    return this.classesService.update(id, updateClassDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class ClassesController {
   })
   @ApiResponse({ status: 404, description: 'Class not found.' })
   remove(@Param('id') id: string) {
-    return this.classesService.remove(+id);
+    return this.classesService.remove(id);
   }
 }

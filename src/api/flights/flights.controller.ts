@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FlightsService } from './flights.service';
 import { CreateFlightDto } from './dto/create-flight.dto';
 import { UpdateFlightDto } from './dto/update-flight.dto';
+import { FlightSearchDto } from './dto/flight-search.dto';
 
 @ApiTags('Flights')
 @Controller('flights')
@@ -35,12 +37,19 @@ export class FlightsController {
     return this.flightsService.findAll();
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Search for flights' })
+  @ApiResponse({ status: 200, description: 'Return matching flights.' })
+  search(@Query() searchDto: FlightSearchDto) {
+    return this.flightsService.search(searchDto);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a flight by ID' })
   @ApiResponse({ status: 200, description: 'Return the flight.' })
   @ApiResponse({ status: 404, description: 'Flight not found.' })
   findOne(@Param('id') id: string) {
-    return this.flightsService.findOne(+id);
+    return this.flightsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +61,7 @@ export class FlightsController {
   @ApiResponse({ status: 404, description: 'Flight not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateFlightDto: UpdateFlightDto) {
-    return this.flightsService.update(+id, updateFlightDto);
+    return this.flightsService.update(id, updateFlightDto);
   }
 
   @Delete(':id')
@@ -63,6 +72,6 @@ export class FlightsController {
   })
   @ApiResponse({ status: 404, description: 'Flight not found.' })
   remove(@Param('id') id: string) {
-    return this.flightsService.remove(+id);
+    return this.flightsService.remove(id);
   }
 }

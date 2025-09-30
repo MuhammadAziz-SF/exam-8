@@ -64,6 +64,8 @@ export class PaymentsService {
   async remove(id: string) {
     await this.findOne(id);
     await this.paymentRepository.delete(id);
-    return { message: `Payment with ID "${id}" has been successfully deleted.` };
+    return {
+      message: `Payment with ID "${id}" has been successfully deleted.`,
+    };
   }
 }

@@ -21,14 +21,17 @@ export class SeatsEntity {
   @Column({ type: 'varchar' })
   seatNumber: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   classId: string;
 
   @ManyToOne(() => PlanesEntity, (p) => p.seats, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'planeId' })
   plane: PlanesEntity;
 
-  @OneToOne(() => ClassesEntity, (c) => c.seat, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ClassesEntity, (c) => c.seats, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'classId' })
   class: ClassesEntity;
 

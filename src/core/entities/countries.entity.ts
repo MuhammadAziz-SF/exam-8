@@ -22,6 +22,8 @@ export class CountriesEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => CitiesEntity, (city) => city.country, { cascade: true })
+  @OneToMany(() => CitiesEntity, (city) => city.country, {
+    cascade: ['insert', 'update'],
+  })
   cities: CitiesEntity[];
 }

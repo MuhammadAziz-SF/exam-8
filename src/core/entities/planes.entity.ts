@@ -3,7 +3,6 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -33,7 +32,10 @@ export class PlanesEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => CompaniesEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CompaniesEntity, (company) => company.planes, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'companyId' })
   company: CompaniesEntity;
 
@@ -41,5 +43,5 @@ export class PlanesEntity {
   seats: SeatsEntity[];
 
   @OneToMany(() => FlightsEntity, (f) => f.plane, { cascade: true })
-  flights: FlightsEntity;
+  flights: FlightsEntity[];
 }

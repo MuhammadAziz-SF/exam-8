@@ -12,6 +12,14 @@ export class CreateTicketDto {
 
   @ApiProperty({
     example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+    description: 'The ID of the user booking the ticket',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
     description: 'The ID of the seat for this ticket',
   })
   @IsUUID()

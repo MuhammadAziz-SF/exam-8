@@ -40,7 +40,7 @@ export class NewsController {
   @ApiResponse({ status: 200, description: 'Return the news article.' })
   @ApiResponse({ status: 404, description: 'News article not found.' })
   findOne(@Param('id') id: string) {
-    return this.newsService.findOne(+id);
+    return this.newsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class NewsController {
   @ApiResponse({ status: 404, description: 'News article not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateNewsDto: UpdateNewsDto) {
-    return this.newsService.update(+id, updateNewsDto);
+    return this.newsService.update(id, updateNewsDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class NewsController {
   })
   @ApiResponse({ status: 404, description: 'News article not found.' })
   remove(@Param('id') id: string) {
-    return this.newsService.remove(+id);
+    return this.newsService.remove(id);
   }
 }

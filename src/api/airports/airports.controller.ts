@@ -40,7 +40,7 @@ export class AirportsController {
   @ApiResponse({ status: 200, description: 'Return the airport.' })
   @ApiResponse({ status: 404, description: 'Airport not found.' })
   findOne(@Param('id') id: string) {
-    return this.airportsService.findOne(+id);
+    return this.airportsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class AirportsController {
   @ApiResponse({ status: 404, description: 'Airport not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateAirportDto: UpdateAirportDto) {
-    return this.airportsService.update(+id, updateAirportDto);
+    return this.airportsService.update(id, updateAirportDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class AirportsController {
   })
   @ApiResponse({ status: 404, description: 'Airport not found.' })
   remove(@Param('id') id: string) {
-    return this.airportsService.remove(+id);
+    return this.airportsService.remove(id);
   }
 }

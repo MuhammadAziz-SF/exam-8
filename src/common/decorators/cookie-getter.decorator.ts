@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 export const CookieGetter = createParamDecorator(
-  async (data: string, context: ExecutionContext): Promise<string> => {
+  (data: string, context: ExecutionContext): Promise<string> => {
     try {
       const request = context.switchToHttp().getRequest();
       const refresh_token = request.cookies[data];

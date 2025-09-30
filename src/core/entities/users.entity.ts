@@ -63,18 +63,18 @@ export class UserEntity {
   @OneToMany(() => NewsEntity, (news) => news.user)
   news: NewsEntity[];
 
-  @OneToOne(() => FlightsEntity, (f) => f.byCreated)
-  byCreated: FlightsEntity;
+  @OneToMany(() => FlightsEntity, (f) => f.byCreated)
+  createdflights: FlightsEntity[];
 
-  @OneToOne(() => FlightsEntity, (f) => f.byUpdated)
-  byUpdated: FlightsEntity;
+  @OneToMany(() => FlightsEntity, (f) => f.byUpdated)
+  updatedflights: FlightsEntity[];
 
-  @OneToOne(() => TicketsEntity, (t) => t.user, { cascade: true })
-  ticket: TicketsEntity;
+  @OneToMany(() => TicketsEntity, (ticket) => ticket.user)
+  tickets: TicketsEntity[];
 
   @OneToMany(() => ReviewsEntity, (r) => r.user, { cascade: true })
   reviews: ReviewsEntity[];
 
-  @OneToOne(() => PaymentsEntity, (p) => p.payedBy, { cascade: true })
-  payedBy: PaymentsEntity;
+  @OneToMany(() => PaymentsEntity, (payment) => payment.payedBy)
+  paymentsprocessed: PaymentsEntity[];
 }

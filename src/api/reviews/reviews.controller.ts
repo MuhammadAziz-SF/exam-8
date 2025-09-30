@@ -40,7 +40,7 @@ export class ReviewsController {
   @ApiResponse({ status: 200, description: 'Return the review.' })
   @ApiResponse({ status: 404, description: 'Review not found.' })
   findOne(@Param('id') id: string) {
-    return this.reviewsService.findOne(+id);
+    return this.reviewsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class ReviewsController {
   @ApiResponse({ status: 404, description: 'Review not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
-    return this.reviewsService.update(+id, updateReviewDto);
+    return this.reviewsService.update(id, updateReviewDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class ReviewsController {
   })
   @ApiResponse({ status: 404, description: 'Review not found.' })
   remove(@Param('id') id: string) {
-    return this.reviewsService.remove(+id);
+    return this.reviewsService.remove(id);
   }
 }

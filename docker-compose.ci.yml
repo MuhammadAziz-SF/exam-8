@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test-api
+    ports:
+      - "3001:3000" # Use a different host port to avoid conflicts
+    env_file:
+      - .env.test
+    depends_on:
+      - db
+    command: ["node", "dist/main"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  db:
+    image: postgres:15-alpine
+    container_name: test-db
+    ports:
+      - "5433:5432" # Use a different host port
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_DB: ${PG_DB_TEST}

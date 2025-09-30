@@ -2,7 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -16,15 +16,12 @@ export class ClassesEntity {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'varchar' })
-  description: string;
-
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => SeatsEntity, (s) => s.class, { cascade: true })
-  seat: SeatsEntity;
+  @OneToMany(() => SeatsEntity, (seat) => seat.class)
+  seats: SeatsEntity[];
 }

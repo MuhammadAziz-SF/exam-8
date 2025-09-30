@@ -1,26 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { NewsEntity } from 'src/core/entities/news.entity';
+import { Repository } from 'typeorm';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { UpdateNewsDto } from './dto/update-news.dto';
 
 @Injectable()
 export class NewsService {
+  constructor(
+    @InjectRepository(NewsEntity)
+    private readonly newsRepository: Repository<NewsEntity>,
+  ) {}
+
   create(createNewsDto: CreateNewsDto) {
-    return 'This action adds a new news';
+    // As per the plan, createdBy is not handled here.
+    // This will likely fail at runtime if createdBy is a non-nullable column.
+    const news = this.newsRepository.create(createNewsDto);
+    return this.newsRepository.save(news);
   }
 
   findAll() {
-    return `This action returns all news`;
+    return this.newsRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} news`;
+  async findOne(id: string) {
+    const news = await this.newsRepository.findOneBy({ id });
+    if (!news) {
+      throw new NotFoundException(`News article with ID "${id}" not found`);
+    }
+    return news;
   }
 
-  update(id: number, updateNewsDto: UpdateNewsDto) {
-    return `This action updates a #${id} news`;
+  async update(id: string, updateNewsDto: UpdateNewsDto) {
+    const news = await this.findOne(id);
+    Object.assign(news, updateNewsDto);
+    return this.newsRepository.save(news);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} news`;
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.newsRepository.delete(id);
+    return {
+      message: `News article with ID "${id}" has been successfully deleted.`,
+    };
   }
 }

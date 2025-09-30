@@ -40,7 +40,17 @@ export class SeatsController {
   @ApiResponse({ status: 200, description: 'Return the seat.' })
   @ApiResponse({ status: 404, description: 'Seat not found.' })
   findOne(@Param('id') id: string) {
-    return this.seatsService.findOne(+id);
+    return this.seatsService.findOne(id);
+  }
+
+  @Get('flight/:flightId')
+  @ApiOperation({
+    summary: 'Get all seats for a specific flight with availability',
+  })
+  @ApiResponse({ status: 200, description: 'Return seats for the flight.' })
+  @ApiResponse({ status: 404, description: 'Flight not found.' })
+  getSeatsForFlight(@Param('flightId') flightId: string) {
+    return this.seatsService.getSeatsForFlight(flightId);
   }
 
   @Patch(':id')
@@ -52,7 +62,7 @@ export class SeatsController {
   @ApiResponse({ status: 404, description: 'Seat not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateSeatDto: UpdateSeatDto) {
-    return this.seatsService.update(+id, updateSeatDto);
+    return this.seatsService.update(id, updateSeatDto);
   }
 
   @Delete(':id')
@@ -63,6 +73,6 @@ export class SeatsController {
   })
   @ApiResponse({ status: 404, description: 'Seat not found.' })
   remove(@Param('id') id: string) {
-    return this.seatsService.remove(+id);
+    return this.seatsService.remove(id);
   }
 }

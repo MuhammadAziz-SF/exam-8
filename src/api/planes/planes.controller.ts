@@ -40,7 +40,7 @@ export class PlanesController {
   @ApiResponse({ status: 200, description: 'Return the plane.' })
   @ApiResponse({ status: 404, description: 'Plane not found.' })
   findOne(@Param('id') id: string) {
-    return this.planesService.findOne(+id);
+    return this.planesService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class PlanesController {
   @ApiResponse({ status: 404, description: 'Plane not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updatePlaneDto: UpdatePlaneDto) {
-    return this.planesService.update(+id, updatePlaneDto);
+    return this.planesService.update(id, updatePlaneDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class PlanesController {
   })
   @ApiResponse({ status: 404, description: 'Plane not found.' })
   remove(@Param('id') id: string) {
-    return this.planesService.remove(+id);
+    return this.planesService.remove(id);
   }
 }

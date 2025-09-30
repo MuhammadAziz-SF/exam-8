@@ -2,7 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -26,6 +25,6 @@ export class CompaniesEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => PlanesEntity, (p) => p.companyId, { onDelete: 'CASCADE' })
+  @OneToMany(() => PlanesEntity, (plane) => plane.company)
   planes: PlanesEntity[];
 }

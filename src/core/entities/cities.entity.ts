@@ -19,7 +19,7 @@ export class CitiesEntity {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   countryId: string;
 
   @CreateDateColumn()
@@ -29,7 +29,8 @@ export class CitiesEntity {
   updateAt: Date;
 
   @ManyToOne(() => CountriesEntity, (country) => country.cities, {
-    cascade: true,
+    onDelete: 'SET NULL',
+    nullable: true,
   })
   @JoinColumn({ name: 'countryId' })
   country: CountriesEntity;

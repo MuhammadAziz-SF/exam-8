@@ -40,7 +40,7 @@ export class TicketsController {
   @ApiResponse({ status: 200, description: 'Return the ticket.' })
   @ApiResponse({ status: 404, description: 'Ticket not found.' })
   findOne(@Param('id') id: string) {
-    return this.ticketsService.findOne(+id);
+    return this.ticketsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class TicketsController {
   @ApiResponse({ status: 404, description: 'Ticket not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateTicketDto: UpdateTicketDto) {
-    return this.ticketsService.update(+id, updateTicketDto);
+    return this.ticketsService.update(id, updateTicketDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class TicketsController {
   })
   @ApiResponse({ status: 404, description: 'Ticket not found.' })
   remove(@Param('id') id: string) {
-    return this.ticketsService.remove(+id);
+    return this.ticketsService.remove(id);
   }
 }

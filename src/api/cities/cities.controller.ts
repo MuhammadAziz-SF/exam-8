@@ -40,7 +40,7 @@ export class CitiesController {
   @ApiResponse({ status: 200, description: 'Return the city.' })
   @ApiResponse({ status: 404, description: 'City not found.' })
   findOne(@Param('id') id: string) {
-    return this.citiesService.findOne(+id);
+    return this.citiesService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class CitiesController {
   @ApiResponse({ status: 404, description: 'City not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateCityDto: UpdateCityDto) {
-    return this.citiesService.update(+id, updateCityDto);
+    return this.citiesService.update(id, updateCityDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class CitiesController {
   })
   @ApiResponse({ status: 404, description: 'City not found.' })
   remove(@Param('id') id: string) {
-    return this.citiesService.remove(+id);
+    return this.citiesService.remove(id);
   }
 }

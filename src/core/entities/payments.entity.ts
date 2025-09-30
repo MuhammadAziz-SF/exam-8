@@ -3,9 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  ManyToMany,
   ManyToOne,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -14,7 +12,7 @@ import { enums } from 'src/common';
 import { TicketsEntity } from './tickets.entity';
 import { UserEntity } from './users.entity';
 
-@Entity({ name: 'planes' })
+@Entity({ name: 'payments' })
 export class PaymentsEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -38,7 +36,7 @@ export class PaymentsEntity {
   @Column({ type: 'varchar' })
   paymentMethod: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid', nullable: true })
   processedBy: string;
 
   @CreateDateColumn()
@@ -51,7 +49,10 @@ export class PaymentsEntity {
   @JoinColumn({ name: 'ticketId' })
   ticket: TicketsEntity;
 
-  @OneToOne(() => UserEntity, (u) => u.payedBy, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (u) => u.paymentsprocessed, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'processedBy' })
   payedBy: UserEntity;
 }

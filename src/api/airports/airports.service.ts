@@ -1,26 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AirportsEntity } from 'src/core/entities/airports.entity';
 import { CreateAirportDto } from './dto/create-airport.dto';
 import { UpdateAirportDto } from './dto/update-airport.dto';
 
 @Injectable()
 export class AirportsService {
+  constructor(
+    @InjectRepository(AirportsEntity)
+    private readonly airportRepository: Repository<AirportsEntity>,
+  ) {}
   create(createAirportDto: CreateAirportDto) {
-    return 'This action adds a new airport';
+    const airport = this.airportRepository.create(createAirportDto);
+    return this.airportRepository.save(airport);
   }
 
   findAll() {
-    return `This action returns all airports`;
+    return this.airportRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} airport`;
+  async findOne(id: string) {
+    const airport = await this.airportRepository.findOneBy({ id });
+    if (!airport) {
+      throw new NotFoundException(`Airport with ID "${id}" not found`);
+    }
+    return airport;
   }
 
-  update(id: number, updateAirportDto: UpdateAirportDto) {
-    return `This action updates a #${id} airport`;
+  async update(id: string, updateAirportDto: UpdateAirportDto) {
+    const airport = await this.findOne(id);
+    Object.assign(airport, updateAirportDto);
+    return this.airportRepository.save(airport);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} airport`;
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.airportRepository.delete(id);
+    return {
+      message: `Airport with ID "${id}" has been successfully deleted.`,
+    };
   }
 }

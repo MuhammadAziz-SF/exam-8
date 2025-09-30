@@ -1,26 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CountriesEntity } from 'src/core/entities/countries.entity';
+import { Repository } from 'typeorm';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { UpdateCountryDto } from './dto/update-country.dto';
 
 @Injectable()
 export class CountriesService {
+  constructor(
+    @InjectRepository(CountriesEntity)
+    private readonly countryRepository: Repository<CountriesEntity>,
+  ) {}
+
   create(createCountryDto: CreateCountryDto) {
-    return 'This action adds a new country';
+    const country = this.countryRepository.create(createCountryDto);
+    return this.countryRepository.save(country);
   }
 
   findAll() {
-    return `This action returns all countries`;
+    return this.countryRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} country`;
+  async findOne(id: string) {
+    const country = await this.countryRepository.findOneBy({ id });
+    if (!country) {
+      throw new NotFoundException(`Country with ID "${id}" not found`);
+    }
+    return country;
   }
 
-  update(id: number, updateCountryDto: UpdateCountryDto) {
-    return `This action updates a #${id} country`;
+  async update(id: string, updateCountryDto: UpdateCountryDto) {
+    const country = await this.findOne(id);
+    Object.assign(country, updateCountryDto);
+    return this.countryRepository.save(country);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} country`;
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.countryRepository.delete(id);
+    return {
+      message: `Country with ID "${id}" has been successfully deleted.`,
+    };
   }
 }

@@ -1,20 +1,16 @@
-import { enums } from 'src/common';
 import {
   Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { FlightsEntity } from './flights.entity';
-import { TicketsEntity } from './tickets.entity';
 import { UserEntity } from './users.entity';
 
-@Entity({ name: 'users' })
+@Entity({ name: 'reviews' })
 export class ReviewsEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -41,7 +37,10 @@ export class ReviewsEntity {
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @OneToOne(() => FlightsEntity, (f) => f.reviews, { onDelete: 'CASCADE' })
+  @ManyToOne(() => FlightsEntity, (f) => f.reviews, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   @JoinColumn({ name: 'flightId' })
   flight: FlightsEntity;
 }

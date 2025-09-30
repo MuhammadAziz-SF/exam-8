@@ -40,7 +40,7 @@ export class CompaniesController {
   @ApiResponse({ status: 200, description: 'Return the company.' })
   @ApiResponse({ status: 404, description: 'Company not found.' })
   findOne(@Param('id') id: string) {
-    return this.companiesService.findOne(+id);
+    return this.companiesService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class CompaniesController {
   @ApiResponse({ status: 404, description: 'Company not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companiesService.update(+id, updateCompanyDto);
+    return this.companiesService.update(id, updateCompanyDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class CompaniesController {
   })
   @ApiResponse({ status: 404, description: 'Company not found.' })
   remove(@Param('id') id: string) {
-    return this.companiesService.remove(+id);
+    return this.companiesService.remove(id);
   }
 }
