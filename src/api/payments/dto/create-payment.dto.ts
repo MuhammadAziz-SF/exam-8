@@ -14,9 +14,9 @@ export class CreatePaymentDto {
     example: 199.99,
     description: 'The payment amount',
   })
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  amount: number;
+  amount: string;
 
   @ApiProperty({
     example: 'USD',

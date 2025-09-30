@@ -8,9 +8,9 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoyaltyProgramService } from './loyalty-program.service.js';
-import { CreateLoyaltyProgramDto } from './dto/create-loyalty-program.dto.js';
-import { UpdateLoyaltyProgramDto } from './dto/update-loyalty-program.dto.js';
+import { LoyaltyProgramService } from './loyalty-program.service';
+import { CreateLoyaltyProgramDto } from './dto/create-loyalty-program.dto';
+import { UpdateLoyaltyProgramDto } from './dto/update-loyalty-program.dto';
 
 @ApiTags('Loyalty Program')
 @Controller('loyalty-program')
@@ -40,7 +40,7 @@ export class LoyaltyProgramController {
   @ApiResponse({ status: 200, description: 'Return the entry.' })
   @ApiResponse({ status: 404, description: 'Entry not found.' })
   findOne(@Param('id') id: string) {
-    return this.loyaltyProgramService.findOne(+id);
+    return this.loyaltyProgramService.findOne(id);
   }
 
   @Patch(':id')
@@ -55,7 +55,7 @@ export class LoyaltyProgramController {
     @Param('id') id: string,
     @Body() updateLoyaltyProgramDto: UpdateLoyaltyProgramDto,
   ) {
-    return this.loyaltyProgramService.update(+id, updateLoyaltyProgramDto);
+    return this.loyaltyProgramService.update(id, updateLoyaltyProgramDto);
   }
 
   @Delete(':id')
@@ -66,6 +66,6 @@ export class LoyaltyProgramController {
   })
   @ApiResponse({ status: 404, description: 'Entry not found.' })
   remove(@Param('id') id: string) {
-    return this.loyaltyProgramService.remove(+id);
+    return this.loyaltyProgramService.remove(id);
   }
 }

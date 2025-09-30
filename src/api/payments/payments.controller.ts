@@ -40,7 +40,7 @@ export class PaymentsController {
   @ApiResponse({ status: 200, description: 'Return the payment.' })
   @ApiResponse({ status: 404, description: 'Payment not found.' })
   findOne(@Param('id') id: string) {
-    return this.paymentsService.findOne(+id);
+    return this.paymentsService.findOne(id);
   }
 
   @Patch(':id')
@@ -52,7 +52,7 @@ export class PaymentsController {
   @ApiResponse({ status: 404, description: 'Payment not found.' })
   @ApiResponse({ status: 400, description: 'Bad Request. Validation failed.' })
   update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
-    return this.paymentsService.update(+id, updatePaymentDto);
+    return this.paymentsService.update(id, updatePaymentDto);
   }
 
   @Delete(':id')
@@ -63,6 +63,6 @@ export class PaymentsController {
   })
   @ApiResponse({ status: 404, description: 'Payment not found.' })
   remove(@Param('id') id: string) {
-    return this.paymentsService.remove(+id);
+    return this.paymentsService.remove(id);
   }
 }
