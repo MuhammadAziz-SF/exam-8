@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
@@ -14,11 +15,21 @@ export default class Application {
       origin: '*',
     });
 
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhiteListed: true,
+        transform: true,
+      }),
+    );
+
     const api = 'api/v1';
     app.setGlobalPrefix(api);
     const config_swagger = new DocumentBuilder()
-      .setTitle('Meet Airlines')
+      .setTitle('Flight Booking App')
+      .setDescription('Flight Booking App API description')
       .setVersion('1.0')
+      .addTag('Flight Booking')
       .addBearerAuth({
         type: 'http',
         scheme: 'Bearer',
